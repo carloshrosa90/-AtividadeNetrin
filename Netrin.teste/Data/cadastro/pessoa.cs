@@ -17,5 +17,6 @@ namespace Netrin.teste.Data.cadastro
 		public long? lon_telefone { get; set; }
 		public List<endereco>? endereco { get; set; } = null;
 		public string? str_email { get; set; }
+		
 	}
 }

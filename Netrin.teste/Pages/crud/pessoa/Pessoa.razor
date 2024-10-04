@@ -1,10 +1,48 @@
 ﻿<h3>Cadastro de pessoa</h3>
 
 @page "/pessoa"
+@using Newtonsoft.Json
 
+
+@if (listPessoa != null || listPessoa?.Count() == 0)
+{
+    <p><em>Sem registro</em></p>
+}
+else if (listPessoa == null)
+{
+    <p><em>Aguarde...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Nome</th>
+                <th>CPF</th>
+                <th>Nascimento</th>
+                <th>Telefone</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var itemPessoa in listPessoa)
+            {
+                <tr>
+                    <td>@itemPessoa.int_id</td>
+                    <td>@itemPessoa.str_nome</td>
+                    <td>@itemPessoa.str_cpf</td>
+                    <td>@itemPessoa.dat_nascimento</td>
+                    <td>@itemPessoa.lon_telefone</td>
+                    <td>@itemPessoa.str_email</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 <EditForm Model=@pessoaInsert OnValidSubmit=@FormSubmitted>
-    <DataAnnotationsValidator/>
+    <DataAnnotationsValidator />
     <ValidationSummary />
 
     <div class="mb-3">
@@ -14,27 +52,27 @@
         <InputText @bind-Value="@pessoaInsert.str_nome" />
     </div>
 
-     <div class="mb-3">
+    <div class="mb-3">
         <strong>CPF</strong>:
     </div>
     <div class="mb-3">
         <InputText @bind-Value="@pessoaInsert.str_cpf" />
     </div>
 
-     <div class="mb-3">
+    <div class="mb-3">
         <strong>Endereço</strong>:
     </div>
     <div class="mb-3">
         <InputText @bind-Value="@enderecoInsert.str_endereco" />
     </div>
- 
-     <div class="mb-3">
+
+    <div class="mb-3">
         <strong>Número</strong>:
     </div>
     <div class="mb-3">
         <InputNumber @bind-Value="@enderecoInsert.int_numero" />
     </div>
- 
+
     <div class="mb-3">
         <strong>Cidade</strong>:
     </div>
@@ -44,14 +82,29 @@
 
     <div class="mb-3">
         Estado
-    </div> 
-    
-   @*  <div class="mb-3">
-        <strong>Data de nascimento</strong>:
+    </div>
+
+    @*  <div class="mb-3">
+    <strong>Data de nascimento</strong>:
     </div>
     <div class="mb-3">
-        <DateInput TValue="DateOnly?" @bind-Value="pessoaInsert.dat_nascimento" />
+    <DateInput TValue="DateOnly?" @bind-Value="pessoaInsert.dat_nascimento" />
     </div> *@
+
+    <div class="mb-3">
+        <strong>Usuário</strong>:
+    </div>
+    <div class="mb-3">
+        <InputText @bind-Value="@usuario" />
+    </div>
+
+    <div class="mb-3">
+        <strong>Senha</strong>:
+    </div>
+    <div class="mb-3">
+        <InputText @bind-Value="@senha" />
+    </div>
+
 
     <button type="submit">Cadastrar</button>
 
@@ -59,17 +112,53 @@
 
 @code {
 
-    public Netrin.teste.Data.cadastro.pessoa? pessoaInsert { get; set; }
-    public Netrin.teste.Data.cadastro.endereco? enderecoInsert { get; set; }
+    string usuario;
+    string senha;
+    List<Netrin.teste.Data.cadastro.pessoa>? listPessoa;
+    Netrin.teste.Data.cadastro.pessoa? pessoaInsert;
+    Netrin.teste.Data.cadastro.endereco? enderecoInsert;
+    HttpClient client = new HttpClient();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        pessoaInsert = new Data.cadastro.pessoa();
-        enderecoInsert = new Data.cadastro.endereco();
+        listPessoa = new List<teste.Data.cadastro.pessoa>();
+        var client = new HttpClient();
+        var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost:7163/pessoa/");
+        var content = new StringContent("", null, "text/plain");
+        request.Content = content;
+        var response = client.Send(request);
+        response.EnsureSuccessStatusCode();
+        listPessoa = JsonConvert.DeserializeObject<List<Netrin.teste.Data.cadastro.pessoa>>(response.Content.ReadAsStringAsync().Result);
+
+        pessoaInsert = new Netrin.teste.Data.cadastro.pessoa();
+        enderecoInsert = new Netrin.teste.Data.cadastro.endereco();
     }
 
     void FormSubmitted()
     {
+
+        if (pessoaInsert?.int_id == 0)
+        {
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7163/pessoa/");
+            var content = new StringContent("{\r\n        \r\n        \"str_nome\": \"Teste\",\r\n        \"dat_nascimento\": \"2024-10-04T13:15:04.222\",\r\n        \"str_cpf\": \"07221921938\",\r\n        \"lon_telefone\": null,\r\n        \"str_email\": \"carlos\",\r\n        \"usuario\": \"carlos\",\r\n        \"senha\": \"123\"\r\n    }", null, "application/json");
+            request.Content = content;
+            var response =  client.Send(request);
+            var statusCode = response.EnsureSuccessStatusCode().StatusCode;
+            
+        }
+        else
+        {
+            client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, $"https://localhost:7163/pessoa/{pessoaInsert.int_id}");
+            var content = new StringContent(" {\r\n    \"str_nome\": \"Teste 35454\",\r\n    \"dat_nascimento\": \"2024-10-04T13:15:04.222Z\",\r\n    \"str_cpf\": \"12345678901\"\r\n  \r\n  }", null, "application/json");
+            request.Content = content;
+            var response = client.Send(request);
+            response.EnsureSuccessStatusCode();
+            Console.WriteLine(response.Content.ReadAsStreamAsync());
+        }
+
+        OnInitialized();
 
     }
 
