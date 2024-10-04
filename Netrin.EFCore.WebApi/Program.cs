@@ -10,7 +10,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<Netrin.EFCore.WebApi.PessoaContext>(options =>
 {
-    options.UseSqlServer("Integrated Security=SSPI;Persist Security Info=False;User ID=Carlos-Pc\\Carlos;Initial Catalog=master;Data Source=CARLOS-PC\\SQLEXPRESS");
+    IConfigurationRoot configuration = new ConfigurationBuilder()
+    .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+    .AddJsonFile("appsettings.json")
+    .Build();
+    options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
 });
 
 var app = builder.Build();
