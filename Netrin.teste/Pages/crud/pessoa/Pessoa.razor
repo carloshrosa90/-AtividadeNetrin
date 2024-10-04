@@ -1,0 +1,76 @@
+﻿<h3>Cadastro de pessoa</h3>
+
+@page "/pessoa"
+
+
+<EditForm Model=@pessoaInsert OnValidSubmit=@FormSubmitted>
+    <DataAnnotationsValidator/>
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <strong>Nome completo</strong>:
+    </div>
+    <div class="mb-3">
+        <InputText @bind-Value="@pessoaInsert.str_nome" />
+    </div>
+
+     <div class="mb-3">
+        <strong>CPF</strong>:
+    </div>
+    <div class="mb-3">
+        <InputText @bind-Value="@pessoaInsert.str_cpf" />
+    </div>
+
+     <div class="mb-3">
+        <strong>Endereço</strong>:
+    </div>
+    <div class="mb-3">
+        <InputText @bind-Value="@enderecoInsert.str_endereco" />
+    </div>
+ 
+     <div class="mb-3">
+        <strong>Número</strong>:
+    </div>
+    <div class="mb-3">
+        <InputNumber @bind-Value="@enderecoInsert.int_numero" />
+    </div>
+ 
+    <div class="mb-3">
+        <strong>Cidade</strong>:
+    </div>
+    <div class="mb-3">
+        <InputText @bind-Value="@enderecoInsert.str_cidade" />
+    </div>
+
+    <div class="mb-3">
+        Estado
+    </div> 
+    
+   @*  <div class="mb-3">
+        <strong>Data de nascimento</strong>:
+    </div>
+    <div class="mb-3">
+        <DateInput TValue="DateOnly?" @bind-Value="pessoaInsert.dat_nascimento" />
+    </div> *@
+
+    <button type="submit">Cadastrar</button>
+
+</EditForm>
+
+@code {
+
+    public Netrin.teste.Data.cadastro.pessoa? pessoaInsert { get; set; }
+    public Netrin.teste.Data.cadastro.endereco? enderecoInsert { get; set; }
+
+    protected override void OnInitialized()
+    {
+        pessoaInsert = new Data.cadastro.pessoa();
+        enderecoInsert = new Data.cadastro.endereco();
+    }
+
+    void FormSubmitted()
+    {
+
+    }
+
+}

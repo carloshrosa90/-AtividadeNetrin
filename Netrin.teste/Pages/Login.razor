@@ -1,0 +1,28 @@
+﻿@page "/login"
+@using Microsoft.AspNetCore.Components.Forms;
+
+<EditForm Model=@loginValidation OnValidSubmit=@FormSubmitted>
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+    Login
+    <InputText @bind-Value="loginValidation.str_usuario"></InputText>
+    Senha
+    <InputText @bind-Value="loginValidation.str_senha"></InputText>
+
+    <button type="submit">Entrar</button>
+
+</EditForm>
+
+@code
+{
+    public Netrin.teste.Data.autenticacao.login.login? loginValidation { get; set; }
+
+    protected override void OnInitialized()
+    {
+        loginValidation = new Data.autenticacao.login.login();
+    }
+    void FormSubmitted()
+    {
+
+    }
+}
