@@ -2,9 +2,11 @@
 
 @page "/pessoa"
 @using Newtonsoft.Json
+@using System.Runtime.Serialization.Json
+@using System.Text
 
 
-@if (listPessoa != null || listPessoa?.Count() == 0)
+@if (listPessoa == null || listPessoa?.Count() == 0)
 {
     <p><em>Sem registro</em></p>
 }
@@ -23,18 +25,22 @@ else
                 <th>Nascimento</th>
                 <th>Telefone</th>
                 <th>Email</th>
+                <th>Edição</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var itemPessoa in listPessoa)
+            @foreach (var itemPessoa in listPessoa.ToList().OrderByDescending(x=>x.id))
             {
                 <tr>
-                    <td>@itemPessoa.int_id</td>
+                    <td>@itemPessoa.id</td>
                     <td>@itemPessoa.str_nome</td>
                     <td>@itemPessoa.str_cpf</td>
                     <td>@itemPessoa.dat_nascimento</td>
                     <td>@itemPessoa.lon_telefone</td>
                     <td>@itemPessoa.str_email</td>
+                    <td>
+                        <button @onclick="() => Edit(itemPessoa)">Editar</button>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -60,6 +66,13 @@ else
     </div>
 
     <div class="mb-3">
+        <strong>E-mail</strong>:
+    </div>
+    <div class="mb-3">
+        <InputText @bind-Value="@pessoaInsert.str_email" />
+    </div>
+
+    <div class="mb-3">
         <strong>Endereço</strong>:
     </div>
     <div class="mb-3">
@@ -80,9 +93,6 @@ else
         <InputText @bind-Value="@enderecoInsert.str_cidade" />
     </div>
 
-    <div class="mb-3">
-        Estado
-    </div>
 
     @*  <div class="mb-3">
     <strong>Data de nascimento</strong>:
@@ -104,62 +114,95 @@ else
     <div class="mb-3">
         <InputText @bind-Value="@senha" />
     </div>
-
-
     <button type="submit">Cadastrar</button>
 
 </EditForm>
-
 @code {
-
+    bool edit = false;
     string usuario;
     string senha;
-    List<Netrin.teste.Data.cadastro.pessoa>? listPessoa;
+    private Netrin.teste.Data.cadastro.pessoa[]? listPessoa;
     Netrin.teste.Data.cadastro.pessoa? pessoaInsert;
     Netrin.teste.Data.cadastro.endereco? enderecoInsert;
     HttpClient client = new HttpClient();
 
     protected override async Task OnInitializedAsync()
     {
-        listPessoa = new List<teste.Data.cadastro.pessoa>();
+        edit = false;
         var client = new HttpClient();
         var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost:7163/pessoa/");
         var content = new StringContent("", null, "text/plain");
         request.Content = content;
         var response = client.Send(request);
         response.EnsureSuccessStatusCode();
-        listPessoa = JsonConvert.DeserializeObject<List<Netrin.teste.Data.cadastro.pessoa>>(response.Content.ReadAsStringAsync().Result);
+        listPessoa = JsonConvert.DeserializeObject<Netrin.teste.Data.cadastro.pessoa[]?>(response.Content.ReadAsStringAsync().Result)?.ToList().OrderByDescending(x=>x.id).ToArray() ?? null;
 
         pessoaInsert = new Netrin.teste.Data.cadastro.pessoa();
         enderecoInsert = new Netrin.teste.Data.cadastro.endereco();
     }
 
+    private async Task Edit(Netrin.teste.Data.cadastro.pessoa? pessoa)
+    {
+        pessoaInsert = pessoa;
+        edit = true;
+
+        // string json = ConverteObjectParaJSon(pessoa);
+        // var client = new HttpClient();
+        // var request = new HttpRequestMessage(HttpMethod.Put, "https://localhost:7163/pessoa/");
+        // var content = new StringContent(json, null, "text/plain");
+        // request.Content = content;
+        // var response = await client.SendAsync(request);
+        // response.EnsureSuccessStatusCode();
+    }
+
     void FormSubmitted()
     {
 
-        if (pessoaInsert?.int_id == 0)
+        if (pessoaInsert?.id != null )
         {
+            string json = ConverteObjectParaJSon(pessoaInsert);
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7163/pessoa/");
-            var content = new StringContent("{\r\n        \r\n        \"str_nome\": \"Teste\",\r\n        \"dat_nascimento\": \"2024-10-04T13:15:04.222\",\r\n        \"str_cpf\": \"07221921938\",\r\n        \"lon_telefone\": null,\r\n        \"str_email\": \"carlos\",\r\n        \"usuario\": \"carlos\",\r\n        \"senha\": \"123\"\r\n    }", null, "application/json");
+
+            if(edit)
+                request = new HttpRequestMessage(HttpMethod.Put, $"https://localhost:7163/pessoa/{pessoaInsert.id}");
+
+            var content = new StringContent(json, null, "application/json");
             request.Content = content;
-            var response =  client.Send(request);
-            var statusCode = response.EnsureSuccessStatusCode().StatusCode;
-            
+            var response = client.Send(request);
+
         }
         else
         {
             client = new HttpClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://localhost:7163/pessoa/{pessoaInsert.int_id}");
-            var content = new StringContent(" {\r\n    \"str_nome\": \"Teste 35454\",\r\n    \"dat_nascimento\": \"2024-10-04T13:15:04.222Z\",\r\n    \"str_cpf\": \"12345678901\"\r\n  \r\n  }", null, "application/json");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"https://localhost:7163/pessoa/{pessoaInsert.id}");
+            var content = new StringContent("", null, "application/json");
             request.Content = content;
             var response = client.Send(request);
             response.EnsureSuccessStatusCode();
-            Console.WriteLine(response.Content.ReadAsStreamAsync());
         }
 
-        OnInitialized();
+        OnInitializedAsync();
 
     }
+
+
+      public string ConverteObjectParaJSon<T>(T obj)
+        {
+            try
+            {
+                DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(T));
+                MemoryStream ms = new MemoryStream();
+                ser.WriteObject(ms, obj);
+                string jsonString = Encoding.UTF8.GetString(ms.ToArray());
+                ms.Close();
+                return jsonString;
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
 
 }
